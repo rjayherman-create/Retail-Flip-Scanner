@@ -1,6 +1,6 @@
-# Warehouse Flip Scanner
+# Retail Flip Scanner
 
-A mobile-first web app for finding Costco markdown items worth flipping on Facebook Marketplace. Supports three capture methods: Photo Scan (AI vision/OCR), Screenshot Upload (multi-row OCR), and Public Web Check (compliance-safe).
+A mobile-first web app for finding clearance items at multiple retailers (Costco, Walmart, Target, BJ's, Sam's Club, Home Depot, Lowe's, Other) worth flipping on Facebook Marketplace. Supports four capture methods: Photo Scan (AI vision/OCR), Screenshot Upload (multi-row OCR), Public Web Check (compliance-safe), and Manual Add.
 
 ## Run & Operate
 
@@ -41,22 +41,24 @@ A mobile-first web app for finding Costco markdown items worth flipping on Faceb
 - **`useQueryClient` from `@tanstack/react-query`**: Not re-exported from `@workspace/api-client-react` — import directly from TanStack.
 - **Generated hooks use `export function` not `export const`**: Query hooks (useListInventory, useGetDashboardSummary, etc.) are `export function`; only mutations use `export const use*`.
 - **No GET /inventory/:id endpoint**: Use `useListInventory()` + `.find(i => i.id === itemId)` in flip-decision and listing-generator pages.
-- **Compliance by design**: Public web check always fails gracefully with `no_inventory_visible` — Costco inventory is login-gated; the app never bypasses auth.
-- **Scoring**: Price endings (.97=clearance, .88=manager markdown, .00=manager special) + category/brand signals + LEGO-specific rules drive the 0–100 flip score.
+- **Compliance by design**: Public web check always fails gracefully with `no_inventory_visible` — retailer inventory is login-gated; the app never bypasses auth.
+- **Multi-retailer scoring**: `scoreFlipItem()` accepts `retailer` and uses retailer-specific logic — Costco/BJ's/Sam's Club use price endings (.97/.88/.00); Walmart/Target/Home Depot/Lowe's use `percent_off` as the primary signal. All share category/brand/price-spread logic.
+- **Retailer default**: `retailer` column defaults to `"Costco"` for backward compatibility with existing inventory records.
+- **New DB fields**: `retailer`, `brand`, `upc`, `sku`, `dpci`, `tcin`, `aisle`, `regular_price`, `clearance_price`, `percent_off`, `box_condition`, `photo_url`, `screenshot_url` added in schema v2.
 
 ## Product
 
-- **Dashboard**: BUY/MAYBE/SKIP counts, capture method breakdown, highest profit item, recent scans
-- **Photo Scan**: Take/upload a photo → AI extracts item details + instant flip score + listing button
-- **Upload Screenshot**: Upload multi-row Costco inventory screenshots → AI extracts all rows + batch save
-- **Check Online**: Attempts public Costco inventory check (fails gracefully if login required)
-- **Manual Add**: Hand-enter any item → AI scoring + save to inventory
-- **Inventory**: Browse, filter (BUY/MAYBE/SKIP), sort, delete items; quick links to Flip Decision and Listing Generator
+- **Dashboard**: BUY/MAYBE/SKIP counts, capture method quick-launch cards, highest profit item, recent scans with retailer shown
+- **Photo Scan**: Take/upload a photo → select retailer + store → AI extracts retailer-specific item details + instant flip score + listing button
+- **Upload Screenshot**: Upload multi-row inventory screenshots → select retailer → AI extracts all rows + batch save with percent_off/regular_price
+- **Check Online**: Retailer-selector + search → attempts public web check (fails gracefully if login required)
+- **Manual Add**: Hand-enter any item with retailer, regular price, percent off, box condition → AI scoring + save
+- **Inventory**: Browse, filter (BUY/MAYBE/SKIP/retailer), sort, delete items; quick links to Flip Decision and Listing Generator
 - **Flip Decision**: Score gauge, pricing breakdown, risk notes, best next action, quantity recommendation
-- **Listing Generator**: AI-generated Facebook Marketplace copy → editable + one-tap copy
-- **Store Comparison**: Cross-store price table for items scanned at multiple Costco locations
+- **Listing Generator**: AI-generated Facebook Marketplace copy → editable + one-tap copy (retailer-branded title)
+- **Store Comparison**: Cross-store price table for items scanned at multiple locations
 - **Watchlist**: Track target buy prices with profit calculator
-- **Settings**: Capture method guide, scoring tier reference, markdown code decoder, compliance notice
+- **Settings**: Supported retailers grid, four capture methods guide, flip score tiers, retailer-specific markdown codes, AI model info, compliance notice
 
 ## User preferences
 

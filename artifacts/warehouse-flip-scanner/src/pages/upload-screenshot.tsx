@@ -7,15 +7,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Upload, AlertCircle, CheckCircle, Loader2, ImageIcon, Pencil } from "lucide-react";
+import { Upload, AlertCircle, CheckCircle, Loader2, ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const STORES = ["Lawrence", "Oceanside", "Westbury", "Other"];
+const RETAILERS = ["Costco", "Walmart", "Target", "BJ's", "Sam's Club", "Home Depot", "Lowe's", "Other"];
+
+const STORES_BY_RETAILER: Record<string, string[]> = {
+  Costco: ["Lawrence", "Oceanside", "Westbury", "Other"],
+  Walmart: ["My Local Walmart", "Other"],
+  Target: ["My Local Target", "Other"],
+  "BJ's": ["My Local BJ's", "Other"],
+  "Sam's Club": ["My Local Sam's Club", "Other"],
+  "Home Depot": ["My Local Home Depot", "Other"],
+  "Lowe's": ["My Local Lowe's", "Other"],
+  Other: ["Other"],
+};
 
 interface OcrRow {
   product_name?: string | null;
+  brand?: string | null;
   item_number?: string | null;
+  upc?: string | null;
   price?: number | null;
+  regular_price?: number | null;
+  clearance_price?: number | null;
+  percent_off?: number | null;
   markdown_code?: string | null;
   stock_status?: string | null;
   needs_review?: boolean;
@@ -24,11 +40,19 @@ interface OcrRow {
 }
 
 export default function UploadScreenshot() {
+  const [retailer, setRetailer] = useState("Costco");
   const [store, setStore] = useState("Lawrence");
   const [searchTerm, setSearchTerm] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [ocrResult, setOcrResult] = useState<{ success: boolean; rows: OcrRow[]; store_location?: string; search_term?: string; viewed_at?: string; error_message?: string } | null>(null);
+  const [ocrResult, setOcrResult] = useState<{
+    success: boolean;
+    rows: OcrRow[];
+    store_location?: string;
+    search_term?: string;
+    viewed_at?: string;
+    error_message?: string;
+  } | null>(null);
   const [editedRows, setEditedRows] = useState<OcrRow[]>([]);
   const [savedCount, setSavedCount] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -37,6 +61,12 @@ export default function UploadScreenshot() {
 
   const screenshotOcr = useScreenshotOcr();
   const createItem = useCreateInventoryItem();
+
+  function handleRetailerChange(r: string) {
+    setRetailer(r);
+    const stores = STORES_BY_RETAILER[r] ?? ["Other"];
+    setStore(stores[0]);
+  }
 
   function handleFile(f: File) {
     setFile(f);
@@ -56,6 +86,7 @@ export default function UploadScreenshot() {
     if (!file) return;
     const formData = new FormData();
     formData.append("image", file);
+    formData.append("retailer", retailer);
     formData.append("store_location", store);
     formData.append("search_term", searchTerm);
 
@@ -74,13 +105,23 @@ export default function UploadScreenshot() {
     for (const row of editedRows) {
       const name = row._editedProductName ?? row.product_name;
       if (!name) continue;
+      const effectivePrice = row._editedPrice
+        ? parseFloat(row._editedPrice)
+        : (row.clearance_price ?? row.price ?? undefined);
+
       await createItem.mutateAsync({
         data: {
+          retailer,
           source_type: "screenshot_upload",
           store_location: ocrResult?.store_location ?? store,
           product_name: name,
+          brand: row.brand ?? undefined,
           item_number: row.item_number ?? undefined,
-          price: row._editedPrice ? parseFloat(row._editedPrice) : (row.price ?? undefined),
+          upc: row.upc ?? undefined,
+          price: effectivePrice,
+          regular_price: row.regular_price ?? undefined,
+          clearance_price: row.clearance_price ?? undefined,
+          percent_off: row.percent_off ?? undefined,
           markdown_code: row.markdown_code ?? undefined,
           stock_status: row.stock_status ?? "In Stock",
           search_term: ocrResult?.search_term ?? searchTerm,
@@ -99,11 +140,13 @@ export default function UploadScreenshot() {
     setEditedRows(rows => rows.map((r, i) => i === idx ? { ...r, [field]: value } : r));
   }
 
+  const stores = STORES_BY_RETAILER[retailer] ?? ["Other"];
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-primary">Upload Screenshot</h2>
-        <p className="text-sm text-muted-foreground mt-1">Upload Costco warehouse inventory screenshots from the app or website.</p>
+        <p className="text-sm text-muted-foreground mt-1">Upload inventory screenshots from any retailer app or website. AI extracts all visible rows.</p>
       </div>
 
       <Card className="shadow-sm">
@@ -127,15 +170,24 @@ export default function UploadScreenshot() {
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
 
           <Button variant="outline" className="w-full" onClick={() => fileRef.current?.click()}>
-            <Upload className="mr-2 h-4 w-4" /> Upload Screenshots
+            <Upload className="mr-2 h-4 w-4" /> Upload Screenshot
           </Button>
+
+          {/* Retailer */}
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Retailer</Label>
+            <Select value={retailer} onValueChange={handleRetailerChange}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{RETAILERS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Store</Label>
               <Select value={store} onValueChange={setStore}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{stores.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
@@ -145,7 +197,9 @@ export default function UploadScreenshot() {
           </div>
 
           <Button className="w-full font-semibold" onClick={handleOcr} disabled={screenshotOcr.isPending || !file}>
-            {screenshotOcr.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extracting...</> : <><Upload className="mr-2 h-4 w-4" /> Extract Inventory Rows</>}
+            {screenshotOcr.isPending
+              ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extracting...</>
+              : <><Upload className="mr-2 h-4 w-4" /> Extract Inventory Rows</>}
           </Button>
         </CardContent>
       </Card>
@@ -161,7 +215,11 @@ export default function UploadScreenshot() {
               )}
             </CardTitle>
             {ocrResult.store_location && (
-              <p className="text-xs text-muted-foreground">Store: {ocrResult.store_location} {ocrResult.search_term && `| Search: ${ocrResult.search_term}`} {ocrResult.viewed_at && `| ${new Date(ocrResult.viewed_at).toLocaleString()}`}</p>
+              <p className="text-xs text-muted-foreground">
+                {retailer} · {ocrResult.store_location}
+                {ocrResult.search_term && ` | ${ocrResult.search_term}`}
+                {ocrResult.viewed_at && ` | ${new Date(ocrResult.viewed_at).toLocaleString()}`}
+              </p>
             )}
           </CardHeader>
 
@@ -180,18 +238,22 @@ export default function UploadScreenshot() {
                       />
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Price ($)</Label>
+                      <Label className="text-xs text-muted-foreground">Sale Price ($)</Label>
                       <Input
                         className="text-sm h-8"
                         type="number"
                         step="0.01"
-                        value={row._editedPrice ?? (row.price?.toString() ?? "")}
+                        value={row._editedPrice ?? ((row.clearance_price ?? row.price)?.toString() ?? "")}
                         onChange={(e) => updateRow(idx, "_editedPrice", e.target.value)}
                       />
                     </div>
                   </div>
-                  <div className="flex gap-3 text-xs text-muted-foreground">
+                  <div className="flex gap-3 text-xs text-muted-foreground flex-wrap">
+                    {row.brand && <span className="font-medium text-foreground">{row.brand}</span>}
                     {row.item_number && <span>Item #{row.item_number}</span>}
+                    {row.upc && <span>UPC: {row.upc}</span>}
+                    {row.regular_price && <span className="line-through">${row.regular_price}</span>}
+                    {row.percent_off && <span className="text-success font-semibold">{row.percent_off}% off</span>}
                     {row.stock_status && <span>{row.stock_status}</span>}
                     {row.markdown_code && <span>Code: {row.markdown_code}</span>}
                   </div>

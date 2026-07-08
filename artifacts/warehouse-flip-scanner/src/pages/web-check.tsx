@@ -5,11 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Globe, AlertCircle, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 
-const STORES = ["Lawrence", "Oceanside", "Westbury"];
+const RETAILERS = ["Costco", "Walmart", "Target", "BJ's", "Sam's Club", "Home Depot", "Lowe's", "Other"];
+
+const STORES_BY_RETAILER: Record<string, string[]> = {
+  Costco: ["Lawrence", "Oceanside", "Westbury"],
+  Walmart: ["My Local Walmart"],
+  Target: ["My Local Target"],
+  "BJ's": ["My Local BJ's"],
+  "Sam's Club": ["My Local Sam's Club"],
+  "Home Depot": ["My Local Home Depot"],
+  "Lowe's": ["My Local Lowe's"],
+  Other: ["Local Store"],
+};
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; message: string }> = {
   public_check_success: {
@@ -22,7 +32,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
     label: "Blocked",
     icon: <XCircle className="h-4 w-4" />,
     color: "text-destructive",
-    message: "Costco did not expose this inventory publicly. Try Photo Scan, Upload Screenshot, or Manual Add.",
+    message: "This retailer did not expose inventory publicly. Try Photo Scan, Upload Screenshot, or Manual Add.",
   },
   login_required: {
     label: "Login Required",
@@ -40,7 +50,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
     label: "No Inventory Visible",
     icon: <AlertCircle className="h-4 w-4" />,
     color: "text-warning",
-    message: "Costco did not expose this inventory publicly. Try Photo Scan, Upload Screenshot, or Manual Add.",
+    message: "Public web data was not available. Try Photo Scan, Screenshot Upload, or Manual Add.",
   },
   parse_failed: {
     label: "Parse Failed",
@@ -57,16 +67,23 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ReactNode; colo
 };
 
 export default function WebCheck() {
+  const [retailer, setRetailer] = useState("Costco");
   const [searchTerm, setSearchTerm] = useState("");
   const [store, setStore] = useState("Lawrence");
   const [result, setResult] = useState<{ status: string; message?: string; rows?: unknown[]; source_url?: string } | null>(null);
 
   const webCheck = usePublicWebCheck();
 
+  function handleRetailerChange(r: string) {
+    setRetailer(r);
+    const stores = STORES_BY_RETAILER[r] ?? ["Local Store"];
+    setStore(stores[0]);
+  }
+
   function handleCheck() {
     if (!searchTerm.trim()) return;
     webCheck.mutate(
-      { data: { search_term: searchTerm.trim(), store_location: store } },
+      { data: { retailer, search_term: searchTerm.trim(), store_location: store } },
       {
         onSuccess: (data) => setResult(data as unknown as typeof result),
         onError: () => setResult({ status: "parse_failed" }),
@@ -75,22 +92,31 @@ export default function WebCheck() {
   }
 
   const statusConfig = result ? (STATUS_CONFIG[result.status] ?? STATUS_CONFIG.parse_failed) : null;
+  const stores = STORES_BY_RETAILER[retailer] ?? ["Local Store"];
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-primary">Check Online</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Try to check public Costco inventory pages without login. Results may be unavailable due to site restrictions.
+          Try to check public retailer pages without login. Results depend on what's publicly visible.
         </p>
       </div>
 
       <Card className="shadow-sm">
         <CardContent className="p-4 space-y-4">
           <div className="space-y-1">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Retailer</Label>
+            <Select value={retailer} onValueChange={handleRetailerChange}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{RETAILERS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Search Term</Label>
             <Input
-              placeholder="lego, toys, tools, air fryer, generator"
+              placeholder="lego, tools, air fryer, generator..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCheck()}
@@ -102,7 +128,7 @@ export default function WebCheck() {
             <Select value={store} onValueChange={setStore}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                {stores.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -124,7 +150,7 @@ export default function WebCheck() {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <span className={statusConfig.color}>{statusConfig.icon}</span>
-              <span>Status: {statusConfig.label}</span>
+              <span>{retailer} — {statusConfig.label}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -144,7 +170,7 @@ export default function WebCheck() {
                     <Link href="/photo-scan">Photo Scan — Take a photo in-store</Link>
                   </Button>
                   <Button variant="outline" size="sm" className="justify-start" asChild>
-                    <Link href="/upload-screenshot">Upload Screenshot — From Costco app</Link>
+                    <Link href="/upload-screenshot">Upload Screenshot — From retailer app</Link>
                   </Button>
                   <Button variant="outline" size="sm" className="justify-start" asChild>
                     <Link href="/manual-add">Manual Add — Enter item details directly</Link>
@@ -163,7 +189,7 @@ export default function WebCheck() {
             <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <div className="text-xs text-muted-foreground space-y-1">
               <p className="font-semibold">Compliance Notice</p>
-              <p>This checker only reads publicly visible Costco pages. It does not log in, bypass CAPTCHA, use private APIs, or copy cookies. If inventory is behind a login wall, the check will fail and you will be directed to Photo Scan or Screenshot Upload.</p>
+              <p>This checker only reads publicly visible retailer pages. It does not log in, bypass CAPTCHA, use private APIs, automate accounts, or copy cookies. If inventory is behind a login wall, the check will fail gracefully.</p>
             </div>
           </div>
         </CardContent>

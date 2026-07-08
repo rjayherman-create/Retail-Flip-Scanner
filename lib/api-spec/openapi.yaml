@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: Warehouse Flip Scanner API
+  version: 0.2.0
+  description: Retail Flip Scanner API
 servers:
   - url: /api
     description: Base API path
@@ -39,6 +39,10 @@ paths:
       tags: [inventory]
       summary: List all inventory items
       parameters:
+        - name: retailer
+          in: query
+          schema:
+            type: string
         - name: source_type
           in: query
           schema:
@@ -346,6 +350,8 @@ components:
       properties:
         id:
           type: integer
+        retailer:
+          type: ["string", "null"]
         source_type:
           type: string
           enum: [photo_scan, public_web_check, screenshot_upload, manual]
@@ -359,9 +365,27 @@ components:
           type: ["string", "null"]
         product_name:
           type: string
+        brand:
+          type: ["string", "null"]
         item_number:
           type: ["string", "null"]
+        upc:
+          type: ["string", "null"]
+        sku:
+          type: ["string", "null"]
+        dpci:
+          type: ["string", "null"]
+        tcin:
+          type: ["string", "null"]
+        aisle:
+          type: ["string", "null"]
         price:
+          type: ["number", "null"]
+        regular_price:
+          type: ["number", "null"]
+        clearance_price:
+          type: ["number", "null"]
+        percent_off:
           type: ["number", "null"]
         markdown_code:
           type: ["string", "null"]
@@ -370,6 +394,8 @@ components:
         visible_brand:
           type: ["string", "null"]
         category:
+          type: ["string", "null"]
+        box_condition:
           type: ["string", "null"]
         normal_retail_estimate:
           type: ["number", "null"]
@@ -392,6 +418,10 @@ components:
           type: ["string", "null"]
         listing_description:
           type: ["string", "null"]
+        photo_url:
+          type: ["string", "null"]
+        screenshot_url:
+          type: ["string", "null"]
         source_url:
           type: ["string", "null"]
         public_check_status:
@@ -407,6 +437,8 @@ components:
       type: object
       required: [source_type, store_location, product_name, stock_status]
       properties:
+        retailer:
+          type: string
         source_type:
           type: string
           enum: [photo_scan, public_web_check, screenshot_upload, manual]
@@ -420,9 +452,27 @@ components:
           type: string
         product_name:
           type: string
+        brand:
+          type: string
         item_number:
           type: string
+        upc:
+          type: string
+        sku:
+          type: string
+        dpci:
+          type: string
+        tcin:
+          type: string
+        aisle:
+          type: string
         price:
+          type: number
+        regular_price:
+          type: number
+        clearance_price:
+          type: number
+        percent_off:
           type: number
         markdown_code:
           type: string
@@ -431,6 +481,8 @@ components:
         visible_brand:
           type: string
         category:
+          type: string
+        box_condition:
           type: string
         normal_retail_estimate:
           type: number
@@ -453,6 +505,10 @@ components:
           type: string
         listing_description:
           type: string
+        photo_url:
+          type: string
+        screenshot_url:
+          type: string
         source_url:
           type: string
         public_check_status:
@@ -463,19 +519,39 @@ components:
     InventoryItemUpdate:
       type: object
       properties:
+        retailer:
+          type: string
         store_location:
           type: string
         product_name:
           type: string
+        brand:
+          type: string
         item_number:
           type: string
+        upc:
+          type: string
+        sku:
+          type: string
+        dpci:
+          type: string
+        tcin:
+          type: string
         price:
+          type: number
+        regular_price:
+          type: number
+        clearance_price:
+          type: number
+        percent_off:
           type: number
         markdown_code:
           type: string
         stock_status:
           type: string
         category:
+          type: string
+        box_condition:
           type: string
         flip_score:
           type: integer
@@ -570,6 +646,8 @@ components:
         image:
           type: string
           format: binary
+        retailer:
+          type: string
         store_location:
           type: string
         category:
@@ -578,11 +656,29 @@ components:
     ExtractedItem:
       type: object
       properties:
+        retailer:
+          type: ["string", "null"]
         product_name:
+          type: ["string", "null"]
+        brand:
           type: ["string", "null"]
         item_number:
           type: ["string", "null"]
+        upc:
+          type: ["string", "null"]
+        sku:
+          type: ["string", "null"]
+        dpci:
+          type: ["string", "null"]
+        tcin:
+          type: ["string", "null"]
         price:
+          type: ["number", "null"]
+        regular_price:
+          type: ["number", "null"]
+        clearance_price:
+          type: ["number", "null"]
+        percent_off:
           type: ["number", "null"]
         markdown_code:
           type: ["string", "null"]
@@ -595,6 +691,8 @@ components:
         scan_time:
           type: ["string", "null"]
         category:
+          type: ["string", "null"]
+        box_condition:
           type: ["string", "null"]
         notes_from_image:
           type: ["string", "null"]
@@ -623,6 +721,8 @@ components:
         image:
           type: string
           format: binary
+        retailer:
+          type: string
         store_location:
           type: string
         search_term:
@@ -633,9 +733,19 @@ components:
       properties:
         product_name:
           type: ["string", "null"]
+        brand:
+          type: ["string", "null"]
         item_number:
           type: ["string", "null"]
+        upc:
+          type: ["string", "null"]
         price:
+          type: ["number", "null"]
+        regular_price:
+          type: ["number", "null"]
+        clearance_price:
+          type: ["number", "null"]
+        percent_off:
           type: ["number", "null"]
         markdown_code:
           type: ["string", "null"]
@@ -667,9 +777,15 @@ components:
       type: object
       required: [search_term, store_location]
       properties:
+        retailer:
+          type: string
         search_term:
           type: string
         store_location:
+          type: string
+        product_url:
+          type: string
+        item_identifier:
           type: string
 
     PublicWebCheckResult:
@@ -699,11 +815,19 @@ components:
       type: object
       required: [product_name, price]
       properties:
+        retailer:
+          type: string
         product_name:
           type: string
         item_number:
           type: string
         price:
+          type: number
+        regular_price:
+          type: number
+        clearance_price:
+          type: number
+        percent_off:
           type: number
         markdown_code:
           type: string
@@ -711,7 +835,11 @@ components:
           type: string
         visible_brand:
           type: string
+        brand:
+          type: string
         stock_status:
+          type: string
+        box_condition:
           type: string
         normal_retail_estimate:
           type: number

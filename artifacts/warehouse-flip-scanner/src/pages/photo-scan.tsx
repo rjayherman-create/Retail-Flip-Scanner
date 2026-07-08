@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { usePhotoScan, getListInventoryQueryKey, getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -11,8 +11,20 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 
-const STORES = ["Lawrence", "Oceanside", "Westbury", "Other / Current Store"];
-const CATEGORIES = ["LEGO", "Toys", "Tools", "Appliances", "Seasonal", "Sporting Goods", "Electronics", "Home", "Other"];
+const RETAILERS = ["Costco", "Walmart", "Target", "BJ's", "Sam's Club", "Home Depot", "Lowe's", "Other"];
+
+const STORES_BY_RETAILER: Record<string, string[]> = {
+  Costco: ["Lawrence", "Oceanside", "Westbury", "Other / Current Store"],
+  Walmart: ["My Local Walmart", "Other / Current Store"],
+  Target: ["My Local Target", "Other / Current Store"],
+  "BJ's": ["My Local BJ's", "Other / Current Store"],
+  "Sam's Club": ["My Local Sam's Club", "Other / Current Store"],
+  "Home Depot": ["My Local Home Depot", "Other / Current Store"],
+  "Lowe's": ["My Local Lowe's", "Other / Current Store"],
+  Other: ["Other / Current Store"],
+};
+
+const CATEGORIES = ["LEGO", "Toys", "Tools", "Appliances", "Seasonal", "Sporting Goods", "Electronics", "Home", "Video Games", "Baby", "Beauty", "Other"];
 
 interface ScanResult {
   success: boolean;
@@ -35,6 +47,7 @@ interface ScanResult {
 }
 
 export default function PhotoScan() {
+  const [retailer, setRetailer] = useState("Costco");
   const [store, setStore] = useState("Lawrence");
   const [category, setCategory] = useState("LEGO");
   const [preview, setPreview] = useState<string | null>(null);
@@ -46,6 +59,12 @@ export default function PhotoScan() {
   const queryClient = useQueryClient();
 
   const photoScan = usePhotoScan();
+
+  function handleRetailerChange(r: string) {
+    setRetailer(r);
+    const stores = STORES_BY_RETAILER[r] ?? ["Other / Current Store"];
+    setStore(stores[0]);
+  }
 
   function handleFile(f: File) {
     setFile(f);
@@ -66,6 +85,7 @@ export default function PhotoScan() {
     }
     const formData = new FormData();
     formData.append("image", file);
+    formData.append("retailer", retailer);
     formData.append("store_location", store === "Other / Current Store" ? "Other" : store);
     formData.append("category", category);
 
@@ -81,11 +101,13 @@ export default function PhotoScan() {
     });
   }
 
+  const stores = STORES_BY_RETAILER[retailer] ?? ["Other / Current Store"];
+
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-32 md:pb-6">
       <div>
         <h2 className="text-2xl font-bold text-primary">Photo Scan</h2>
-        <p className="text-sm text-muted-foreground mt-1">Take a quick in-store photo of a shelf tag, box, price sign, barcode, or Costco app screen.</p>
+        <p className="text-sm text-muted-foreground mt-1">Take a quick in-store photo of a clearance tag, shelf tag, box, barcode, or app screen.</p>
       </div>
 
       {/* Upload Area */}
@@ -117,13 +139,24 @@ export default function PhotoScan() {
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
 
+          {/* Retailer + Store + Category */}
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Retailer</Label>
+            <Select value={retailer} onValueChange={handleRetailerChange}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {RETAILERS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Store</Label>
               <Select value={store} onValueChange={setStore}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {STORES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {stores.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -160,30 +193,36 @@ export default function PhotoScan() {
                 result.decision.recommendation === "MAYBE" ? "border-warning/40 bg-warning/5" :
                 "border-destructive/40 bg-destructive/5"
               }`}>
-                <CardHeader className="pb-2">
+                <CardContent className="p-4 space-y-4">
                   <div className="flex items-center justify-between">
-                    <motion.div
-                      initial={{ scale: 0.5 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    >
+                    <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
                       <RecommendationBadge recommendation={result.decision.recommendation} />
                     </motion.div>
                     <span className="text-2xl font-bold text-muted-foreground">{result.decision.flip_score}/100</span>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
+
                   <div>
                     <h3 className="text-lg font-bold">{String(result.extracted?.product_name ?? "Unknown Item")}</h3>
-                    {result.extracted?.item_number && (
-                      <p className="text-sm text-muted-foreground">Item #{String(result.extracted.item_number)}</p>
-                    )}
+                    <div className="flex flex-wrap gap-2 mt-1 text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">{retailer}</span>
+                      <span>•</span>
+                      <span>{store}</span>
+                      {result.extracted?.item_number && <><span>•</span><span>#{String(result.extracted.item_number)}</span></>}
+                      {result.extracted?.upc && <><span>•</span><span>UPC: {String(result.extracted.upc)}</span></>}
+                      {result.extracted?.dpci && <><span>•</span><span>DPCI: {String(result.extracted.dpci)}</span></>}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="bg-card border border-border rounded-lg p-3">
-                      <div className="text-muted-foreground text-xs uppercase font-semibold mb-1">Costco Price</div>
-                      <div className="font-bold text-lg">${result.extracted?.price ?? "—"}</div>
+                      <div className="text-muted-foreground text-xs uppercase font-semibold mb-1">Sale Price</div>
+                      <div className="font-bold text-lg">${result.extracted?.price ?? result.extracted?.clearance_price ?? "—"}</div>
+                      {result.extracted?.regular_price && (
+                        <div className="text-xs text-muted-foreground line-through">${String(result.extracted.regular_price)}</div>
+                      )}
+                      {result.extracted?.percent_off && (
+                        <div className="text-xs text-success font-semibold">{String(result.extracted.percent_off)}% off</div>
+                      )}
                     </div>
                     <div className="bg-card border border-border rounded-lg p-3">
                       <div className="text-muted-foreground text-xs uppercase font-semibold mb-1">FB List Price</div>
@@ -211,6 +250,12 @@ export default function PhotoScan() {
                   {result.decision.risk_notes && (
                     <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
                       <span className="font-semibold">Risk: </span>{result.decision.risk_notes}
+                    </div>
+                  )}
+
+                  {result.decision.best_next_action && (
+                    <div className="text-xs text-primary bg-primary/5 rounded-lg p-3 font-medium">
+                      → {result.decision.best_next_action}
                     </div>
                   )}
 
@@ -243,6 +288,10 @@ export default function PhotoScan() {
                     <div>
                       <p className="font-semibold text-destructive">Scan Issue</p>
                       <p className="text-sm text-muted-foreground mt-1">{result.error_message ?? "Could not read the image clearly. Try a closer photo of the price tag."}</p>
+                      <div className="flex gap-2 mt-3">
+                        <Button size="sm" variant="outline" asChild><Link href="/upload-screenshot">Upload Screenshot</Link></Button>
+                        <Button size="sm" variant="outline" asChild><Link href="/manual-add">Manual Add</Link></Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

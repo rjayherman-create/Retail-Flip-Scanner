@@ -1,0 +1,246 @@
+UPDATE THE APP FROM “WAREHOUSE FLIP SCANNER” TO “RETAIL FLIP SCANNER”.
+
+The app must support multiple retailers, not only Costco.
+
+Supported retailers:
+- Costco
+- Walmart
+- Target
+- BJ’s
+- Sam’s Club
+- Home Depot
+- Lowe’s
+- Other
+
+Core purpose:
+The app helps a user scan clearance, markdown, or in-store deal items and decide whether they are good Facebook Marketplace flips.
+
+Primary capture methods must remain equal:
+1. Photo Scan
+2. Screenshot Upload
+3. Public Web Check
+4. Manual Add
+
+Important:
+Photo Scan and Screenshot Upload should work for every retailer.
+Public Web Check is experimental and must only use publicly visible information where allowed. Do not bypass login, CAPTCHA, bot protection, private APIs, or retailer restrictions. Do not automate accounts. Do not use copied cookies. If public web check is blocked or not allowed, show the user a fallback to Photo Scan, Screenshot Upload, or Manual Add.
+
+Default retailer/store setup:
+Costco:
+- Lawrence
+- Oceanside
+- Westbury
+
+Walmart:
+- allow user to add local Walmart stores manually
+
+Target:
+- allow user to add local Target stores manually
+
+Retailer-specific item identifiers:
+Costco:
+- item_number
+
+Walmart:
+- UPC
+- SKU
+- item_number
+
+Target:
+- DPCI
+- UPC
+- TCIN
+
+Generic item fields:
+- retailer
+- store_location
+- source_type
+- product_name
+- brand
+- category
+- price
+- regular_price
+- clearance_price
+- markdown_code
+- percent_off
+- item_number
+- upc
+- sku
+- dpci
+- tcin
+- aisle
+- stock_status
+- box_condition
+- scan_time
+- photo_url
+- screenshot_url
+- source_url
+- public_check_status
+- flip_score
+- recommendation
+- facebook_list_price
+- expected_sale_price
+- estimated_profit
+- max_quantity
+- risk_notes
+- listing_title
+- listing_description
+- created_at
+- updated_at
+
+Retailer-specific markdown logic:
+
+Costco:
+- .97 = clearance / markdown signal
+- .00 = possible local manager markdown
+- .88 = possible markdown signal
+- .99 = normal retail
+- star on tag = possible discontinued / limited stock
+
+Walmart:
+- yellow clearance tag = strong markdown signal
+- price ending .00 or .50 may be clearance
+- compare regular price vs clearance price
+- stronger score when clearance is 40%+ off
+- strongest when item is small, sealed, giftable, and has known resale demand
+
+Target:
+- clearance percent is important
+- 30% off = weak/maybe
+- 50% off = maybe/good
+- 70% off = strong
+- 90% off = very strong but may be picked over
+- use DPCI/UPC/TCIN when visible
+- watch for seasonal and toy reset clearance
+
+Photo Scan updates:
+The camera scan must detect which retailer the tag appears to be from when possible:
+- Costco price sign
+- Walmart yellow clearance tag
+- Target clearance tag
+- generic shelf tag
+
+If retailer cannot be detected, ask the user to select retailer manually.
+
+Photo Scan result must show:
+- Retailer
+- Store
+- Product
+- Identifier: item number / UPC / SKU / DPCI / TCIN
+- Current price
+- Regular price if visible
+- Percent off if visible
+- Recommendation: BUY / MAYBE / SKIP
+- Flip score
+- Suggested quantity
+- Facebook list price
+- Expected sale price
+- Estimated profit
+- Risk note
+
+Public Web Check:
+Keep this as optional and experimental.
+The route should be:
+POST /api/public-web-check
+
+Input:
+- retailer
+- store_location
+- search_term
+- product_url optional
+- item_identifier optional
+
+Behavior:
+- For each retailer, only check public pages if available and allowed.
+- Never log in.
+- Never bypass CAPTCHA.
+- Never use private APIs.
+- Never use copied cookies.
+- Never hammer websites.
+- Return a clear failure message when blocked.
+
+Failure message:
+“Public web data was not available for this retailer or item. Use Photo Scan, Screenshot Upload, or Manual Add.”
+
+Update dashboard action cards:
+1. Scan Photo
+“Take a quick in-store photo of a clearance tag, shelf tag, box, barcode, or app screen.”
+
+2. Upload Screenshot
+“Upload screenshots from Costco, Walmart, Target, or other store apps.”
+
+3. Check Online
+“Try public web checking where allowed and visible.”
+
+4. Manual Add
+“Enter item, store, price, and condition manually.”
+
+Update navigation:
+- Dashboard
+- Photo Scan
+- Upload Screenshot
+- Check Online
+- Inventory
+- Store Comparison
+- Watchlist
+- Listing Generator
+- Settings
+
+Update scoring engine:
+Create a generic scoreFlipItem(item) function that works across retailers.
+
+Scoring inputs:
+- retailer
+- product_name
+- brand
+- category
+- price
+- regular_price
+- clearance_price
+- percent_off
+- markdown_code
+- item identifiers
+- box_condition
+- stock_status
+- local demand notes
+
+Scoring logic:
+- Start at 50
+- Add points for strong markdown
+- Add points for high-demand category
+- Add points for sealed/new condition
+- Add points for easy storage
+- Add points for expected profit above default minimum
+- Subtract points for bulky item
+- Subtract points for damaged box
+- Subtract points for niche item
+- Subtract points for low profit spread
+- Subtract points for likely local saturation
+
+Default recommendations:
+BUY:
+- score 75+
+- expected profit at least $7 per unit
+- item is easy to store and sell locally
+
+MAYBE:
+- score 55 to 74
+- buy only 1 test unit
+
+SKIP:
+- score below 55
+- low spread, damaged, bulky, niche, or slow resale risk
+
+Settings:
+Add retailer settings:
+- enabled retailers
+- default stores by retailer
+- default minimum profit
+- default buy threshold
+- default maybe threshold
+- local Facebook Marketplace area
+- preferred listing template
+
+Final product question:
+The app should answer quickly:
+“Should I put this in my cart or leave it?”

@@ -26,9 +26,10 @@ router.get("/inventory/best-buys", async (req, res) => {
 
 router.get("/inventory", async (req, res) => {
   try {
-    const { source_type, store_location, recommendation } = req.query as Record<string, string>;
+    const { retailer, source_type, store_location, recommendation } = req.query as Record<string, string>;
     let items = await db.select().from(inventoryItemsTable);
 
+    if (retailer) items = items.filter((i) => i.retailer === retailer);
     if (source_type) items = items.filter((i) => i.source_type === source_type);
     if (store_location) items = items.filter((i) => i.store_location === store_location);
     if (recommendation) items = items.filter((i) => i.recommendation === recommendation);
@@ -48,6 +49,7 @@ router.post("/inventory", async (req, res) => {
     const [item] = await db
       .insert(inventoryItemsTable)
       .values({
+        retailer: body.retailer ?? "Costco",
         source_type: body.source_type,
         store_location: body.store_location,
         product_name: body.product_name,
@@ -55,11 +57,21 @@ router.post("/inventory", async (req, res) => {
         search_term: body.search_term ?? null,
         viewed_at: body.viewed_at ?? null,
         scan_time: body.scan_time ?? null,
+        brand: body.brand ?? null,
         item_number: body.item_number ?? null,
+        upc: body.upc ?? null,
+        sku: body.sku ?? null,
+        dpci: body.dpci ?? null,
+        tcin: body.tcin ?? null,
+        aisle: body.aisle ?? null,
         price: body.price ?? null,
+        regular_price: body.regular_price ?? null,
+        clearance_price: body.clearance_price ?? null,
+        percent_off: body.percent_off ?? null,
         markdown_code: body.markdown_code ?? null,
         visible_brand: body.visible_brand ?? null,
         category: body.category ?? null,
+        box_condition: body.box_condition ?? null,
         normal_retail_estimate: body.normal_retail_estimate ?? null,
         facebook_list_price: body.facebook_list_price ?? null,
         expected_sale_price: body.expected_sale_price ?? null,
@@ -70,6 +82,8 @@ router.post("/inventory", async (req, res) => {
         risk_notes: body.risk_notes ?? null,
         listing_title: body.listing_title ?? null,
         listing_description: body.listing_description ?? null,
+        photo_url: body.photo_url ?? null,
+        screenshot_url: body.screenshot_url ?? null,
         source_url: body.source_url ?? null,
         public_check_status: body.public_check_status ?? null,
         notes_from_image: body.notes_from_image ?? null,

@@ -6,6 +6,37 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, TrendingUp, AlertCircle, Scan, Keyboard, Globe, Image as ImageIcon } from "lucide-react";
 
+const CAPTURE_CARDS = [
+  {
+    href: "/photo-scan",
+    icon: Scan,
+    title: "Scan Photo",
+    desc: "Take a quick in-store photo of a clearance tag, shelf tag, box, barcode, or app screen.",
+    color: "text-blue-500",
+  },
+  {
+    href: "/upload-screenshot",
+    icon: ImageIcon,
+    title: "Upload Screenshot",
+    desc: "Upload screenshots from Costco, Walmart, Target, or other store apps.",
+    color: "text-teal-500",
+  },
+  {
+    href: "/web-check",
+    icon: Globe,
+    title: "Check Online",
+    desc: "Try public web checking where allowed and visible.",
+    color: "text-purple-500",
+  },
+  {
+    href: "/manual-add",
+    icon: Keyboard,
+    title: "Manual Add",
+    desc: "Enter item, store, price, and condition manually.",
+    color: "text-slate-500",
+  },
+];
+
 export default function Dashboard() {
   const { data: summary, isLoading } = useGetDashboardSummary();
 
@@ -80,6 +111,24 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Capture Method Quick-Launch Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {CAPTURE_CARDS.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Link key={card.href} href={card.href}>
+              <Card className="shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
+                <CardContent className="p-4 space-y-2">
+                  <Icon className={`h-5 w-5 ${card.color}`} />
+                  <p className="font-semibold text-sm">{card.title}</p>
+                  <p className="text-xs text-muted-foreground leading-snug">{card.desc}</p>
+                </CardContent>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
+
       {/* Capture breakdown & Insights */}
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="shadow-sm">
@@ -124,7 +173,7 @@ export default function Dashboard() {
           <Card className="shadow-sm bg-primary/5 border-primary/20">
             <CardHeader>
               <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-primary" /> 
+                <TrendingUp className="h-4 w-4 text-primary" />
                 Highest Profit Potential
               </CardTitle>
             </CardHeader>
@@ -136,10 +185,10 @@ export default function Dashboard() {
                   </div>
                   <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                     <RecommendationBadge recommendation={summary.highest_profit_item.recommendation} />
-                    <span>Costco: ${summary.highest_profit_item.price}</span>
+                    <span>{summary.highest_profit_item.retailer ?? "Costco"}: ${summary.highest_profit_item.price}</span>
                   </div>
                 </div>
-                
+
                 <div className="p-3 bg-white dark:bg-black rounded-lg border border-border">
                   <div className="flex justify-between items-center text-sm mb-1">
                     <span className="text-muted-foreground">Est. Resale:</span>
@@ -180,6 +229,8 @@ export default function Dashboard() {
                   <div className="flex flex-col gap-1 max-w-[60%]">
                     <span className="font-medium truncate" title={item.product_name}>{item.product_name}</span>
                     <div className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span className="font-medium">{item.retailer ?? "Costco"}</span>
+                      <span>•</span>
                       <span>{item.store_location}</span>
                       <span>•</span>
                       <span>${item.price}</span>
@@ -198,7 +249,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              No recent scans found. Get out there and start scanning!
+              No recent scans yet. Start scanning clearance items!
             </div>
           )}
         </CardContent>
