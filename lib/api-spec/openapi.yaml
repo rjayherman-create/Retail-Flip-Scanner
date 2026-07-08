@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Warehouse Flip Scanner API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: inventory
+    description: Inventory items
+  - name: scan
+    description: Scan and OCR operations
+  - name: watchlist
+    description: Watchlist operations
+  - name: dashboard
+    description: Dashboard summaries
 paths:
   /healthz:
     get:
@@ -24,6 +32,304 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /inventory:
+    get:
+      operationId: listInventory
+      tags: [inventory]
+      summary: List all inventory items
+      parameters:
+        - name: source_type
+          in: query
+          schema:
+            type: string
+        - name: store_location
+          in: query
+          schema:
+            type: string
+        - name: recommendation
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of inventory items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryItem"
+    post:
+      operationId: createInventoryItem
+      tags: [inventory]
+      summary: Create an inventory item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+
+  /inventory/best-buys:
+    get:
+      operationId: listBestBuys
+      tags: [inventory]
+      summary: Get top BUY-rated items
+      responses:
+        "200":
+          description: Top buy items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryItem"
+
+  /inventory/{id}:
+    patch:
+      operationId: updateInventoryItem
+      tags: [inventory]
+      summary: Update an inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteInventoryItem
+      tags: [inventory]
+      summary: Delete an inventory item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /watchlist:
+    get:
+      operationId: listWatchlist
+      tags: [watchlist]
+      summary: List watchlist items
+      responses:
+        "200":
+          description: Watchlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WatchlistItem"
+    post:
+      operationId: createWatchlistItem
+      tags: [watchlist]
+      summary: Add item to watchlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+
+  /watchlist/{id}:
+    patch:
+      operationId: updateWatchlistItem
+      tags: [watchlist]
+      summary: Update a watchlist item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WatchlistItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WatchlistItem"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteWatchlistItem
+      tags: [watchlist]
+      summary: Remove from watchlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /photo-scan:
+    post:
+      operationId: photoScan
+      tags: [scan]
+      summary: Scan a photo of a price tag or item
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/PhotoScanInput"
+      responses:
+        "200":
+          description: Scan result with flip decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoScanResult"
+
+  /screenshot-ocr:
+    post:
+      operationId: screenshotOcr
+      tags: [scan]
+      summary: Extract inventory rows from screenshots
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ScreenshotOcrInput"
+      responses:
+        "200":
+          description: Extracted inventory rows for review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScreenshotOcrResult"
+
+  /public-web-check:
+    post:
+      operationId: publicWebCheck
+      tags: [scan]
+      summary: Check public Costco inventory (compliance-safe)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicWebCheckInput"
+      responses:
+        "200":
+          description: Public web check result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicWebCheckResult"
+
+  /score-item:
+    post:
+      operationId: scoreItem
+      tags: [scan]
+      summary: Score an item for flip potential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScoreItemInput"
+      responses:
+        "200":
+          description: Flip decision score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlipDecision"
+
+  /generate-listing:
+    post:
+      operationId: generateListing
+      tags: [scan]
+      summary: Generate a Facebook Marketplace listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateListingInput"
+      responses:
+        "200":
+          description: Facebook Marketplace listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacebookListing"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /store-comparison:
+    get:
+      operationId: getStoreComparison
+      tags: [dashboard]
+      summary: Compare items across stores
+      responses:
+        "200":
+          description: Store comparison rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StoreComparisonRow"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +340,508 @@ components:
       required:
         - status
 
+    InventoryItem:
+      type: object
+      required: [id, source_type, store_location, product_name, stock_status, created_at, updated_at]
+      properties:
+        id:
+          type: integer
+        source_type:
+          type: string
+          enum: [photo_scan, public_web_check, screenshot_upload, manual]
+        store_location:
+          type: string
+        search_term:
+          type: ["string", "null"]
+        viewed_at:
+          type: ["string", "null"]
+        scan_time:
+          type: ["string", "null"]
+        product_name:
+          type: string
+        item_number:
+          type: ["string", "null"]
+        price:
+          type: ["number", "null"]
+        markdown_code:
+          type: ["string", "null"]
+        stock_status:
+          type: string
+        visible_brand:
+          type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        normal_retail_estimate:
+          type: ["number", "null"]
+        facebook_list_price:
+          type: ["number", "null"]
+        expected_sale_price:
+          type: ["string", "null"]
+        estimated_profit:
+          type: ["string", "null"]
+        flip_score:
+          type: ["integer", "null"]
+        recommendation:
+          type: ["string", "null"]
+          enum: ["BUY", "MAYBE", "SKIP", null]
+        max_quantity:
+          type: ["string", "null"]
+        risk_notes:
+          type: ["string", "null"]
+        listing_title:
+          type: ["string", "null"]
+        listing_description:
+          type: ["string", "null"]
+        source_url:
+          type: ["string", "null"]
+        public_check_status:
+          type: ["string", "null"]
+        notes_from_image:
+          type: ["string", "null"]
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    InventoryItemInput:
+      type: object
+      required: [source_type, store_location, product_name, stock_status]
+      properties:
+        source_type:
+          type: string
+          enum: [photo_scan, public_web_check, screenshot_upload, manual]
+        store_location:
+          type: string
+        search_term:
+          type: string
+        viewed_at:
+          type: string
+        scan_time:
+          type: string
+        product_name:
+          type: string
+        item_number:
+          type: string
+        price:
+          type: number
+        markdown_code:
+          type: string
+        stock_status:
+          type: string
+        visible_brand:
+          type: string
+        category:
+          type: string
+        normal_retail_estimate:
+          type: number
+        facebook_list_price:
+          type: number
+        expected_sale_price:
+          type: string
+        estimated_profit:
+          type: string
+        flip_score:
+          type: integer
+        recommendation:
+          type: string
+          enum: [BUY, MAYBE, SKIP]
+        max_quantity:
+          type: string
+        risk_notes:
+          type: string
+        listing_title:
+          type: string
+        listing_description:
+          type: string
+        source_url:
+          type: string
+        public_check_status:
+          type: string
+        notes_from_image:
+          type: string
+
+    InventoryItemUpdate:
+      type: object
+      properties:
+        store_location:
+          type: string
+        product_name:
+          type: string
+        item_number:
+          type: string
+        price:
+          type: number
+        markdown_code:
+          type: string
+        stock_status:
+          type: string
+        category:
+          type: string
+        flip_score:
+          type: integer
+        recommendation:
+          type: string
+          enum: [BUY, MAYBE, SKIP]
+        max_quantity:
+          type: string
+        facebook_list_price:
+          type: number
+        expected_sale_price:
+          type: string
+        estimated_profit:
+          type: string
+        risk_notes:
+          type: string
+        notes_from_image:
+          type: string
+
+    WatchlistItem:
+      type: object
+      required: [id, item_number, product_name, created_at, updated_at]
+      properties:
+        id:
+          type: integer
+        item_number:
+          type: string
+        product_name:
+          type: string
+        desired_buy_price:
+          type: ["number", "null"]
+        target_resale_price:
+          type: ["number", "null"]
+        stores_to_watch:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        last_seen_price:
+          type: ["number", "null"]
+        last_seen_store:
+          type: ["string", "null"]
+        last_seen_at:
+          type: ["string", "null"]
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    WatchlistItemInput:
+      type: object
+      required: [item_number, product_name]
+      properties:
+        item_number:
+          type: string
+        product_name:
+          type: string
+        desired_buy_price:
+          type: number
+        target_resale_price:
+          type: number
+        stores_to_watch:
+          type: string
+        notes:
+          type: string
+
+    WatchlistItemUpdate:
+      type: object
+      properties:
+        item_number:
+          type: string
+        product_name:
+          type: string
+        desired_buy_price:
+          type: number
+        target_resale_price:
+          type: number
+        stores_to_watch:
+          type: string
+        notes:
+          type: string
+        last_seen_price:
+          type: number
+        last_seen_store:
+          type: string
+        last_seen_at:
+          type: string
+
+    PhotoScanInput:
+      type: object
+      required: [image, store_location]
+      properties:
+        image:
+          type: string
+          format: binary
+        store_location:
+          type: string
+        category:
+          type: string
+
+    ExtractedItem:
+      type: object
+      properties:
+        product_name:
+          type: ["string", "null"]
+        item_number:
+          type: ["string", "null"]
+        price:
+          type: ["number", "null"]
+        markdown_code:
+          type: ["string", "null"]
+        visible_brand:
+          type: ["string", "null"]
+        stock_status:
+          type: ["string", "null"]
+        store_location:
+          type: ["string", "null"]
+        scan_time:
+          type: ["string", "null"]
+        category:
+          type: ["string", "null"]
+        notes_from_image:
+          type: ["string", "null"]
+        confidence:
+          type: ["string", "null"]
+
+    PhotoScanResult:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+        extracted:
+          $ref: "#/components/schemas/ExtractedItem"
+        decision:
+          $ref: "#/components/schemas/FlipDecision"
+        error_message:
+          type: ["string", "null"]
+        saved_item:
+          $ref: "#/components/schemas/InventoryItem"
+
+    ScreenshotOcrInput:
+      type: object
+      required: [store_location]
+      properties:
+        image:
+          type: string
+          format: binary
+        store_location:
+          type: string
+        search_term:
+          type: string
+
+    OcrRow:
+      type: object
+      properties:
+        product_name:
+          type: ["string", "null"]
+        item_number:
+          type: ["string", "null"]
+        price:
+          type: ["number", "null"]
+        markdown_code:
+          type: ["string", "null"]
+        stock_status:
+          type: ["string", "null"]
+        needs_review:
+          type: boolean
+
+    ScreenshotOcrResult:
+      type: object
+      required: [success, rows]
+      properties:
+        success:
+          type: boolean
+        store_location:
+          type: ["string", "null"]
+        search_term:
+          type: ["string", "null"]
+        viewed_at:
+          type: ["string", "null"]
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/OcrRow"
+        error_message:
+          type: ["string", "null"]
+
+    PublicWebCheckInput:
+      type: object
+      required: [search_term, store_location]
+      properties:
+        search_term:
+          type: string
+        store_location:
+          type: string
+
+    PublicWebCheckResult:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum:
+            - public_check_success
+            - public_check_blocked
+            - login_required
+            - captcha_detected
+            - no_inventory_visible
+            - parse_failed
+            - rate_limited
+        message:
+          type: ["string", "null"]
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/OcrRow"
+        source_url:
+          type: ["string", "null"]
+
+    ScoreItemInput:
+      type: object
+      required: [product_name, price]
+      properties:
+        product_name:
+          type: string
+        item_number:
+          type: string
+        price:
+          type: number
+        markdown_code:
+          type: string
+        category:
+          type: string
+        visible_brand:
+          type: string
+        stock_status:
+          type: string
+        normal_retail_estimate:
+          type: number
+        local_demand_notes:
+          type: string
+
+    FlipDecision:
+      type: object
+      required: [flip_score, recommendation]
+      properties:
+        flip_score:
+          type: integer
+        recommendation:
+          type: string
+          enum: [BUY, MAYBE, SKIP]
+        main_reason:
+          type: ["string", "null"]
+        facebook_list_price:
+          type: ["number", "null"]
+        expected_sale_price:
+          type: ["string", "null"]
+        estimated_profit:
+          type: ["string", "null"]
+        max_quantity:
+          type: ["string", "null"]
+        negotiation_floor:
+          type: ["number", "null"]
+        risk_notes:
+          type: ["string", "null"]
+        storage_notes:
+          type: ["string", "null"]
+        best_next_action:
+          type: ["string", "null"]
+
+    GenerateListingInput:
+      type: object
+      required: [product_name, price, recommendation]
+      properties:
+        product_name:
+          type: string
+        item_number:
+          type: string
+        price:
+          type: number
+        facebook_list_price:
+          type: number
+        expected_sale_price:
+          type: string
+        category:
+          type: string
+        store_location:
+          type: string
+        negotiation_floor:
+          type: number
+
+    FacebookListing:
+      type: object
+      required: [title, asking_price, description]
+      properties:
+        title:
+          type: string
+        asking_price:
+          type: number
+        description:
+          type: string
+        bundle_offer:
+          type: ["string", "null"]
+        pickup_text:
+          type: ["string", "null"]
+        negotiation_floor:
+          type: ["number", "null"]
+        keywords:
+          type: array
+          items:
+            type: string
+
+    DashboardSummary:
+      type: object
+      required: [total_items, buy_count, maybe_count, skip_count, photo_scan_count, online_check_count, screenshot_count, manual_count]
+      properties:
+        total_items:
+          type: integer
+        buy_count:
+          type: integer
+        maybe_count:
+          type: integer
+        skip_count:
+          type: integer
+        photo_scan_count:
+          type: integer
+        online_check_count:
+          type: integer
+        screenshot_count:
+          type: integer
+        manual_count:
+          type: integer
+        highest_profit_item:
+          $ref: "#/components/schemas/InventoryItem"
+        cheapest_store:
+          type: ["string", "null"]
+        recent_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItem"
+
+    StoreComparisonRow:
+      type: object
+      required: [item_number, product_name]
+      properties:
+        item_number:
+          type: string
+        product_name:
+          type: string
+        lawrence_price:
+          type: ["number", "null"]
+        lawrence_stock:
+          type: ["string", "null"]
+        oceanside_price:
+          type: ["number", "null"]
+        oceanside_stock:
+          type: ["string", "null"]
+        westbury_price:
+          type: ["number", "null"]
+        westbury_stock:
+          type: ["string", "null"]
+        cheapest_store:
+          type: ["string", "null"]
+        best_action:
+          type: ["string", "null"]
+        flip_score:
+          type: ["integer", "null"]
+        estimated_profit:
+          type: ["string", "null"]

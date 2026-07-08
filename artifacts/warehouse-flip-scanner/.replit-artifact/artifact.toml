@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Warehouse Flip Scanner"
+version = "1.0.0"
+id = "artifacts/warehouse-flip-scanner"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21448
+
+[services.development]
+run = "pnpm --filter @workspace/warehouse-flip-scanner run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/warehouse-flip-scanner", "run", "build" ]
+publicDir = "artifacts/warehouse-flip-scanner/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21448"
+BASE_PATH = "/"

@@ -1,0 +1,846 @@
+You are building a production-ready web app called Warehouse Flip Scanner.
+
+GOAL
+Build a mobile-first and desktop-friendly app that helps a user find Costco markdown items worth flipping on Facebook Marketplace.
+
+The app must support three equal capture methods:
+1. Photo Scan
+2. Public Web Check
+3. Screenshot Upload
+
+Do not treat OCR as only a fallback.
+Do not treat scraping/web checking as the only main method.
+The user should be able to start from any capture method.
+
+DEFAULT STORES
+Use these three default Costco store locations:
+- Lawrence
+- Oceanside
+- Westbury
+
+IMPORTANT COMPLIANCE RULES
+The app may include a Public Web Check feature, but it must follow these rules:
+- Do not bypass Costco login.
+- Do not automate Costco member login.
+- Do not bypass CAPTCHA.
+- Do not bypass bot protection.
+- Do not use stolen, copied, or user-exported cookies.
+- Do not use private Costco APIs.
+- Do not hammer Costco with repeated requests.
+- Do not pretend inventory is confirmed if the page cannot be read.
+- If public data is blocked, show a clean fallback message and direct the user to Photo Scan, Screenshot Upload, or Manual Add.
+
+Compliance footer text:
+“This tool supports photo scans, screenshot uploads, manual entries, and public web checks. It does not bypass Costco login, CAPTCHA, membership checks, bot protection, or private systems. Public web results may fail if inventory is not visible without login. Prices and stock may change.”
+
+APP NAME
+Warehouse Flip Scanner
+
+TAGLINE
+Find markdown inventory worth flipping before you buy.
+
+MAIN DASHBOARD
+Create a clean dashboard with four large action cards:
+
+1. Scan Photo
+Subtitle:
+“Take a quick in-store photo of a shelf tag, box, price sign, barcode, or Costco app screen.”
+Button:
+“Start Photo Scan”
+
+2. Check Online
+Subtitle:
+“Try to check public Costco inventory pages without login.”
+Button:
+“Check Online”
+
+3. Upload Screenshot
+Subtitle:
+“Upload Costco warehouse inventory screenshots from the app or website.”
+Button:
+“Upload Screenshot”
+
+4. Manual Add
+Subtitle:
+“Enter item, price, store, and stock status manually.”
+Button:
+“Add Item”
+
+CORE PAGES
+Build these pages/routes:
+
+1. Dashboard
+Route: /dashboard
+
+2. Photo Scan
+Route: /photo-scan
+
+3. Public Web Check
+Route: /web-check
+
+4. Screenshot Upload
+Route: /upload-screenshot
+
+5. Manual Add
+Route: /manual-add
+
+6. Inventory Review
+Route: /inventory
+
+7. Store Comparison
+Route: /store-comparison
+
+8. Flip Decision
+Route: /flip-decision/:itemId
+
+9. Facebook Listing Generator
+Route: /listing-generator/:itemId
+
+10. Watchlist
+Route: /watchlist
+
+11. Settings
+Route: /settings
+
+PHOTO SCAN PAGE
+This page is designed for quick use inside Costco on a phone.
+
+Purpose:
+The user takes a photo of a shelf tag, product box, barcode, price sign, markdown tag, or Costco app screen and gets an instant BUY / MAYBE / SKIP result.
+
+Required UI:
+- Large camera/upload area
+- Button: “Take Photo”
+- Button: “Upload Image”
+- Store selector:
+  - Lawrence
+  - Oceanside
+  - Westbury
+  - Other / Current Store
+- Category selector:
+  - LEGO
+  - Toys
+  - Tools
+  - Appliances
+  - Seasonal
+  - Sporting Goods
+  - Electronics
+  - Home
+  - Other
+- Button: “Quick Scan”
+- Result card appears immediately after scan
+- Sticky bottom action bar on mobile
+
+Photo Scan should extract from image:
+- product_name
+- item_number
+- price
+- markdown_code
+- visible_brand
+- stock_status
+- store_location
+- scan_time
+- category
+- notes_from_image
+
+Default stock_status for shelf/photo scan:
+“Seen in store”
+
+Photo Scan result card must show:
+
+Recommendation:
+BUY / MAYBE / SKIP
+
+Fields:
+- Product name
+- Item number
+- Costco price
+- Markdown code
+- Flip score
+- Max quantity
+- Facebook list price
+- Expected sale price
+- Estimated profit per unit
+- Risk note
+- Button: “Save to Inventory”
+- Button: “Generate Listing”
+- Button: “Compare Stores”
+
+Example Photo Scan result:
+
+BUY
+
+LEGO Speed Champions Assortment
+Item #1939203
+Costco price: $14.97
+Markdown: .97
+Flip score: 84/100
+Buy quantity: 2–4
+List on Facebook: $25
+Expected sale: $20–$22
+Profit estimate: $5–$8 each
+Risk: Watch for local Costco saturation.
+
+PUBLIC WEB CHECK PAGE
+The online checker must be equal to the scan workflow.
+
+Purpose:
+The user enters a search term and store, and the app attempts to read only publicly visible Costco search/product information without logging in.
+
+Required UI:
+- Search term input
+  Placeholder: “lego, toys, tools, air fryer, generator”
+- Store selector:
+  - Lawrence
+  - Oceanside
+  - Westbury
+- Button: “Check Public Inventory”
+- Status indicator
+- Results table grouped by store
+- Button: “Save Selected Rows”
+- Button: “Compare Stores”
+
+Public Web Check behavior:
+- Attempt to read only public Costco pages visible without login.
+- Do not use login automation.
+- Do not bypass CAPTCHA.
+- Do not use private APIs.
+- Do not use copied cookies.
+- Do not hammer the website.
+- Respect block/failure states.
+- If the public page does not expose local inventory, return a failure status and suggest Photo Scan, Screenshot Upload, or Manual Add.
+
+Public Web Check statuses:
+- public_check_success
+- public_check_blocked
+- login_required
+- captcha_detected
+- no_inventory_visible
+- parse_failed
+- rate_limited
+
+If blocked, show this exact message:
+“Costco did not expose this inventory publicly. Try Photo Scan, Upload Screenshot, or Manual Add.”
+
+Public Web Check should extract when visible:
+- store_location
+- search_term
+- viewed_at
+- product_name
+- item_number
+- price
+- markdown_code
+- stock_status
+- source_url
+- public_check_status
+
+SCREENSHOT UPLOAD PAGE
+Purpose:
+The user uploads screenshots from the Costco app or Costco warehouse inventory search screen.
+
+Required UI:
+- Drag and drop upload area
+- Button: “Upload Screenshots”
+- Multiple screenshot support
+- Store selector if store cannot be detected
+- Search term field if search term cannot be detected
+- Review table before saving
+
+Screenshot Upload should extract:
+- store_location
+- viewed_at
+- search_term
+- product_name
+- item_number
+- price
+- markdown_code
+- stock_status
+
+Example from screenshot:
+Search term: lego
+Store: Lawrence
+Viewed at: Jul 8, 2026 at 01:41 PM
+Product: LEGO Speed Champions Assortment
+Item #: 1939203
+Price: $14.97
+Stock: In Stock
+
+Allow user to review and correct OCR mistakes before saving.
+
+MANUAL ADD PAGE
+Purpose:
+The user can manually enter an item if scanning or web check fails.
+
+Fields:
+- store_location
+- product_name
+- item_number
+- price
+- stock_status
+- category
+- notes
+
+Button:
+“Score This Item”
+
+INVENTORY REVIEW PAGE
+Show all captured items from:
+- Photo Scan
+- Public Web Check
+- Screenshot Upload
+- Manual Add
+
+Inventory table columns:
+- Source Type
+- Store
+- Product Name
+- Item #
+- Price
+- Markdown Code
+- Stock Status
+- Flip Score
+- Recommendation
+- Max Quantity
+- Expected Sale Price
+- Estimated Profit
+- Actions
+
+Source type badges:
+- Photo Scan
+- Online Check
+- Screenshot
+- Manual
+
+Actions:
+- View Decision
+- Generate Listing
+- Compare Stores
+- Add to Watchlist
+- Delete
+
+STORE COMPARISON PAGE
+Purpose:
+Compare the same item across Lawrence, Oceanside, and Westbury.
+
+Behavior:
+- Group items by item_number.
+- Compare price and stock status across the three stores.
+- Highlight cheapest in-stock store.
+- Recommend best store to visit first.
+- Show estimated profit by store.
+
+Store comparison table:
+
+Columns:
+- Item #
+- Product Name
+- Lawrence Price
+- Lawrence Stock
+- Oceanside Price
+- Oceanside Stock
+- Westbury Price
+- Westbury Stock
+- Cheapest Store
+- Best Action
+
+Example recommendation:
+“Go to Lawrence first. Speed Champions and Creator are both at $14.97 and in stock. Skip FIFA unless buying only one test unit.”
+
+FLIP DECISION ENGINE
+Every item must be scored the same way regardless of capture method.
+
+Score range:
+0 to 100
+
+Scoring factors:
+- Markdown strength
+- Brand demand
+- Expected resale spread
+- Giftability
+- Local Facebook Marketplace demand
+- Ease of storage
+- Seasonality
+- Category demand
+- Niche risk
+- Saturation risk
+- Bulky item risk
+- Condition risk
+- Competition risk
+
+Markdown rules:
+- Price ending .97 = Costco markdown / clearance signal
+- Price ending .00 = possible manager/local markdown
+- Price ending .88 = possible markdown signal
+- Price ending .99 = normal retail, weaker signal
+- Star on tag or screenshot = possible discontinued/limited stock signal
+
+Recommendation rules:
+
+BUY:
+- score 75+
+- expected profit at least $7 per unit
+- item is easy to store and sell locally
+- item has strong brand or category demand
+
+MAYBE:
+- score 55 to 74
+- profit exists but demand is uncertain
+- item may be niche
+- suggest buying only 1 test unit
+
+SKIP:
+- score below 55
+- low spread
+- niche item
+- bulky item
+- damaged item
+- slow resale risk
+- too much local saturation
+
+Flip Decision output must include:
+- Recommendation: BUY / MAYBE / SKIP
+- Flip score
+- Main reason
+- Costco price
+- Suggested Facebook list price
+- Expected sale price
+- Estimated profit per unit
+- Suggested quantity
+- Negotiation floor
+- Risk notes
+- Storage notes
+- Best next action
+
+Example:
+
+BUY
+
+Reason:
+Strong LEGO demand, good Costco markdown price, easy gift item, and small enough to store.
+
+Costco price: $14.97
+List price: $25
+Expected sale: $20–$22
+Profit estimate: $5–$8 each
+Suggested quantity: 2–4
+Negotiation floor: $20
+Risk: Marketplace may get flooded if many local Costco shoppers find the same clearance.
+
+FACEBOOK LISTING GENERATOR
+Generate a ready-to-post Facebook Marketplace listing.
+
+Required fields:
+- Title
+- Asking price
+- Short description
+- Bundle offer
+- Pickup text
+- Negotiation floor
+- Suggested keywords
+
+Example title:
+“New Sealed LEGO Speed Champions Set — Costco Clearance Find”
+
+Example description:
+“New sealed LEGO set. Great gift. Pickup in Long Island area. Asking $25 or 2 for $45. Cash/Venmo. No holds without pickup time.”
+
+WATCHLIST PAGE
+Purpose:
+Allow user to track items and search terms.
+
+Watchlist fields:
+- item_number
+- product_name
+- desired_buy_price
+- target_resale_price
+- stores_to_watch
+- notes
+- last_seen_price
+- last_seen_store
+- last_seen_at
+
+Watchlist actions:
+- Add item
+- Edit target price
+- Mark as bought
+- Mark as skipped
+- Remove
+- Run public check
+- Add new photo scan
+
+SETTINGS PAGE
+Settings:
+- Default stores
+- Default category
+- Default minimum profit
+- Default buy threshold score
+- Default maybe threshold score
+- Local pickup town
+- Facebook listing template
+- Preferred payment wording
+- Enable/disable Public Web Check
+- Enable/disable Photo Scan
+- Enable/disable Screenshot Upload
+
+DEFAULT SETTINGS
+Default minimum profit:
+$7 per unit
+
+Default BUY threshold:
+75
+
+Default MAYBE threshold:
+55
+
+Default local area:
+Long Island
+
+Default stores:
+- Lawrence
+- Oceanside
+- Westbury
+
+DATA MODEL
+Create an InventoryItem model with these fields:
+
+InventoryItem:
+- id
+- source_type: photo_scan, public_web_check, screenshot_upload, manual
+- store_location
+- search_term
+- viewed_at
+- scan_time
+- product_name
+- item_number
+- price
+- markdown_code
+- stock_status
+- visible_brand
+- category
+- normal_retail_estimate
+- facebook_list_price
+- expected_sale_price
+- estimated_profit
+- flip_score
+- recommendation: BUY, MAYBE, SKIP
+- max_quantity
+- risk_notes
+- listing_title
+- listing_description
+- source_url
+- public_check_status
+- notes_from_image
+- created_at
+- updated_at
+
+Create a WatchlistItem model:
+
+WatchlistItem:
+- id
+- item_number
+- product_name
+- desired_buy_price
+- target_resale_price
+- stores_to_watch
+- notes
+- last_seen_price
+- last_seen_store
+- last_seen_at
+- created_at
+- updated_at
+
+Create a ScanSession model:
+
+ScanSession:
+- id
+- source_type
+- store_location
+- search_term
+- image_url
+- raw_ocr_text
+- parsed_json
+- status
+- created_at
+- updated_at
+
+AI/OCR EXTRACTION
+Use OCR or vision extraction to parse product rows from uploaded images and screenshots.
+
+For Photo Scan:
+Extract a single item when possible.
+
+For Screenshot Upload:
+Extract multiple rows when visible.
+
+Return structured JSON:
+{
+  "store_location": "",
+  "search_term": "",
+  "viewed_at": "",
+  "items": [
+    {
+      "product_name": "",
+      "item_number": "",
+      "price": "",
+      "markdown_code": "",
+      "stock_status": "",
+      "visible_brand": "",
+      "category": "",
+      "notes_from_image": ""
+    }
+  ]
+}
+
+If confidence is low:
+- Flag field as “Needs review”
+- Let user correct before saving
+
+UI DESIGN
+Overall style:
+- QuickBooks-style dense dashboard
+- Clean tables
+- Small cards
+- Mobile-first for scanning
+- Desktop left sidebar
+- Phone hamburger menu
+- Blue, white, slate, and green accents
+- Avoid dull black/white-only design
+
+Desktop layout:
+- Left sidebar navigation
+- Top header
+- Compact dashboard cards
+- Dense inventory tables
+- Filter bar
+- Store comparison grid
+
+Mobile layout:
+- Bottom sticky action bar on Photo Scan page
+- Large scan button
+- Minimal typing
+- Big BUY / MAYBE / SKIP result
+- One-tap save
+- One-tap generate listing
+- One-tap compare stores
+- Hamburger menu
+
+NAVIGATION
+Sidebar/Desktop:
+- Dashboard
+- Photo Scan
+- Check Online
+- Upload Screenshot
+- Inventory
+- Store Comparison
+- Watchlist
+- Settings
+
+Mobile bottom actions on scan result:
+- Save
+- Listing
+- Compare
+
+DASHBOARD WIDGETS
+Show:
+- Best buys today
+- Items to skip
+- Cheapest store
+- Highest profit estimate
+- Recent scans
+- Watchlist price drops
+- Store comparison summary
+- Capture method counts:
+  - Photo Scans
+  - Online Checks
+  - Screenshots
+  - Manual Adds
+
+SAMPLE ITEMS FOR TESTING
+Seed the app with sample Costco LEGO items:
+
+1.
+Product: LEGO Speed Champions Assortment
+Item #: 1939203
+Store: Lawrence
+Price: $14.97
+Stock: In Stock
+Expected result: BUY
+
+2.
+Product: LEGO FIFA Football Scene Assortment
+Item #: 1939201
+Store: Lawrence
+Price: $19.97
+Stock: In Stock
+Expected result: MAYBE or SKIP depending on demand
+
+3.
+Product: LEGO Botanical Assortment
+Item #: 1939198
+Store: Lawrence
+Price: $19.97
+Stock: In Stock
+Expected result: MAYBE
+
+4.
+Product: LEGO Creator Assortment
+Item #: 1939196
+Store: Lawrence
+Price: $14.97
+Stock: In Stock
+Expected result: BUY
+
+ERROR HANDLING
+Photo Scan errors:
+- “Could not read the image clearly. Try a closer photo of the price tag.”
+- “Price not detected. Please enter price manually.”
+- “Item number not detected. You can still score the item manually.”
+
+Public Web Check errors:
+- “Costco did not expose this inventory publicly. Try Photo Scan, Upload Screenshot, or Manual Add.”
+- “Login appears required. This app will not bypass login.”
+- “CAPTCHA or bot protection detected. Use Photo Scan or Screenshot Upload.”
+- “No inventory data was visible on the public page.”
+
+Screenshot Upload errors:
+- “No inventory rows detected. Try uploading a clearer screenshot.”
+- “Store location not detected. Please select store manually.”
+
+BUILD REQUIREMENTS
+Use a modern React/Next.js style app.
+Use TypeScript.
+Use clean reusable components.
+Use responsive CSS or Tailwind.
+Create mock API routes if backend is not fully connected yet.
+Use local database or Supabase-style schema.
+Keep the code organized.
+
+COMPONENTS TO CREATE
+- AppShell
+- Sidebar
+- MobileHeader
+- DashboardCards
+- CaptureMethodCard
+- PhotoScanUploader
+- WebCheckForm
+- ScreenshotUploader
+- InventoryTable
+- StoreComparisonTable
+- FlipDecisionCard
+- ListingGenerator
+- WatchlistTable
+- SettingsForm
+- RecommendationBadge
+- SourceTypeBadge
+- MarkdownCodeBadge
+- ProfitBadge
+
+API ROUTES TO CREATE
+- POST /api/photo-scan
+- POST /api/screenshot-ocr
+- POST /api/public-web-check
+- POST /api/score-item
+- POST /api/generate-listing
+- GET /api/inventory
+- POST /api/inventory
+- PATCH /api/inventory/:id
+- DELETE /api/inventory/:id
+- GET /api/watchlist
+- POST /api/watchlist
+- PATCH /api/watchlist/:id
+- DELETE /api/watchlist/:id
+
+PUBLIC WEB CHECK API BEHAVIOR
+The /api/public-web-check route should:
+- Accept search_term and store_location
+- Try to read only publicly visible Costco web data
+- Never log in
+- Never accept cookies from the user
+- Never bypass CAPTCHA
+- Never use private APIs
+- Return one of the public_check_status values
+- If successful, return parsed inventory rows
+- If blocked, return a fallback message
+
+PHOTO SCAN API BEHAVIOR
+The /api/photo-scan route should:
+- Accept an uploaded image
+- Run OCR/vision extraction
+- Parse product, item number, price, and markdown code
+- Score the item
+- Return a quick result card
+
+SCREENSHOT OCR API BEHAVIOR
+The /api/screenshot-ocr route should:
+- Accept one or more screenshots
+- Extract all visible inventory rows
+- Return reviewable structured rows
+- Let user save confirmed rows to inventory
+
+SCORING FUNCTION
+Create a reusable scoring function:
+
+scoreFlipItem(item)
+
+Inputs:
+- product_name
+- item_number
+- price
+- markdown_code
+- category
+- visible_brand
+- stock_status
+- normal_retail_estimate
+- local_demand_notes
+
+Outputs:
+- flip_score
+- recommendation
+- facebook_list_price
+- expected_sale_price
+- estimated_profit
+- max_quantity
+- risk_notes
+
+Basic scoring logic:
+- Start at 50
+- Add 20 if markdown_code is .97
+- Add 15 if category is LEGO or strong gift category
+- Add 10 if item is small/easy to store
+- Add 10 if expected profit is at least $7
+- Add 5 if item is sealed/new
+- Subtract 15 if niche theme
+- Subtract 10 if bulky
+- Subtract 10 if expected profit below $5
+- Subtract 10 if stock appears common across many stores
+- Clamp score between 0 and 100
+
+Listing price logic:
+- For low-cost LEGO at $14.97, suggest listing around $25
+- Expected sale around $20–$22
+- Bundle option: 2 for $45
+- Negotiation floor should protect minimum profit
+
+SUCCESS CRITERIA
+The app is successful when the user can:
+
+1. Open the app in Costco on a phone.
+2. Tap Scan Photo.
+3. Take a photo of a price tag or item.
+4. Instantly see BUY / MAYBE / SKIP.
+5. Save the result.
+6. Generate a Facebook Marketplace listing.
+7. Compare the item against Lawrence, Oceanside, and Westbury.
+8. Also use Check Online when public data is visible.
+9. Also upload screenshots from Costco app inventory searches.
+10. Review all inventory in one unified table.
+
+FINAL PRODUCT FEEL
+The app should answer one question fast:
+
+“Should I put this in my cart or leave it?”
+
+Make the Photo Scan result extremely fast and clear.
+Make the Public Web Check useful but honest when blocked.
+Make Screenshot Upload reliable for Costco app screenshots.
+Make Store Comparison simple enough to decide which Costco to visit first.

@@ -1,0 +1,109 @@
+import { ReactNode } from "react";
+import { Link, useLocation } from "wouter";
+import { 
+  LayoutDashboard, 
+  Camera, 
+  Globe, 
+  Upload, 
+  List, 
+  Map, 
+  Bookmark, 
+  Settings,
+  Menu
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+const navItems = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/photo-scan", label: "Photo Scan", icon: Camera },
+  { href: "/web-check", label: "Check Online", icon: Globe },
+  { href: "/upload-screenshot", label: "Upload Screenshot", icon: Upload },
+  { href: "/inventory", label: "Inventory", icon: List },
+  { href: "/store-comparison", label: "Store Comparison", icon: Map },
+  { href: "/watchlist", label: "Watchlist", icon: Bookmark },
+  { href: "/settings", label: "Settings", icon: Settings },
+];
+
+function ComplianceFooter() {
+  return (
+    <footer className="mt-8 border-t border-border pt-4 pb-8 text-xs text-muted-foreground text-center px-4">
+      <p>
+        This tool supports photo scans, screenshot uploads, manual entries, and public web checks. 
+        It does not bypass Costco login, CAPTCHA, membership checks, bot protection, or private systems. 
+        Public web results may fail if inventory is not visible without login. Prices and stock may change.
+      </p>
+    </footer>
+  );
+}
+
+export function AppLayout({ children }: { children: ReactNode }) {
+  const [location] = useLocation();
+
+  const NavLinks = () => (
+    <nav className="flex flex-col gap-1 w-full">
+      {navItems.map((item) => {
+        const isActive = location === item.href;
+        const Icon = item.icon;
+        return (
+          <Link key={item.href} href={item.href} className="w-full">
+            <Button
+              variant={isActive ? "secondary" : "ghost"}
+              className={`w-full justify-start ${isActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""}`}
+            >
+              <Icon className="mr-2 h-4 w-4" />
+              {item.label}
+            </Button>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
+  return (
+    <div className="flex min-h-screen bg-background text-foreground">
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex flex-col w-64 border-r border-border bg-card">
+        <div className="p-4 border-b border-border">
+          <h1 className="font-bold text-lg text-primary tracking-tight">Warehouse Flip Scanner</h1>
+          <p className="text-xs text-muted-foreground mt-1 leading-tight">
+            Find markdown inventory worth flipping before you buy.
+          </p>
+        </div>
+        <div className="p-4 flex-1">
+          <NavLinks />
+        </div>
+      </aside>
+
+      {/* Mobile Header & Main Content */}
+      <div className="flex-1 flex flex-col w-full max-w-full overflow-hidden">
+        {/* Mobile Header */}
+        <header className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card sticky top-0 z-10">
+          <div>
+            <h1 className="font-bold text-lg text-primary tracking-tight">Warehouse Flip Scanner</h1>
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-0">
+              <div className="p-4 border-b border-border">
+                <h1 className="font-bold text-lg text-primary tracking-tight">Scanner</h1>
+              </div>
+              <div className="p-4">
+                <NavLinks />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </header>
+
+        <main className="flex-1 overflow-auto p-4 md:p-6 pb-24 md:pb-6 relative">
+          {children}
+          <ComplianceFooter />
+        </main>
+      </div>
+    </div>
+  );
+}
