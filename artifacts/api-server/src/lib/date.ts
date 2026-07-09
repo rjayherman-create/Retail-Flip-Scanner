@@ -1,3 +1,7 @@
+/**
+ * Converts supported date-like values to ISO8601 strings.
+ * Returns null when input is missing or cannot be parsed into a valid date.
+ */
 export function toIsoDateTime(value: unknown): string | null {
   if (value instanceof Date) {
     const timestamp = value.getTime();
@@ -5,14 +9,17 @@ export function toIsoDateTime(value: unknown): string | null {
   }
 
   if (typeof value === "string") {
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+    return parseDateLike(value);
   }
 
   if (typeof value === "number") {
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+    return parseDateLike(value);
   }
 
   return null;
+}
+
+function parseDateLike(value: string | number): string | null {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
