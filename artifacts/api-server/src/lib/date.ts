@@ -2,7 +2,7 @@
  * Converts supported date-like values to ISO 8601 strings.
  * Returns null when input is missing or cannot be parsed into a valid date.
  */
-export function toIsoDateTime(value: unknown): string | null {
+export function toIsoDateTime(value: Date | string | number | null | undefined): string | null {
   if (value instanceof Date) {
     const timestamp = value.getTime();
     return Number.isNaN(timestamp) ? null : value.toISOString();
