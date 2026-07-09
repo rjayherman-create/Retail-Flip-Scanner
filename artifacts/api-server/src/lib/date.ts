@@ -8,7 +8,7 @@ export function toIsoDateTime(value: unknown): string {
 
   if (typeof value === "string") {
     const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
+    return Number.isNaN(parsed.getTime()) ? EPOCH_ISO : parsed.toISOString();
   }
 
   if (typeof value === "number") {
