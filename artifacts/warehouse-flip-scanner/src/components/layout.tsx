@@ -11,7 +11,9 @@ import {
   Search,
   Table2,
   Calculator,
-  ReceiptText
+  ReceiptText,
+  PackageCheck,
+  Kanban
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -22,6 +24,9 @@ const navItems = [
   { href: "/quick-scan", label: "Shelf Scan", icon: Camera },
   { href: "/comp-lookup", label: "Deal Hunt", icon: Search },
   { href: "/budget-planner", label: "Budget Planner", icon: Calculator },
+  { href: "/selling-assistant", label: "Selling Assistant", icon: PackageCheck },
+  { href: "/listing-workbench", label: "Listing Workbench", icon: ReceiptText },
+  { href: "/sales-pipeline", label: "Sales Pipeline", icon: Kanban },
   { href: "/inventory-spreadsheet", label: "Inventory Spreadsheet", icon: Table2 },
   { href: "/accounting-ledger", label: "Accounting Ledger", icon: ReceiptText },
   { href: "/store-comparison", label: "Store Comparison", icon: Map },
@@ -49,6 +54,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {navItems.map((item) => {
         const isActive = location === item.href ||
           (item.href === "/listing-generator" && location.startsWith("/listing-generator/")) ||
+          (item.href === "/selling-assistant" && (location.startsWith("/price-markdown-planner") || location.startsWith("/buyer-message-templates"))) ||
           (item.href === "/comp-lookup" && (location.startsWith("/comp-details/") || location.startsWith("/manual-comp-entry/"))) ||
           (item.href === "/inventory-spreadsheet" && location.startsWith("/inventory-trash"));
         const Icon = item.icon;

@@ -4,7 +4,7 @@ import { RecommendationBadge } from "@/components/shared/badges";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, TrendingUp, AlertCircle, Scan, Keyboard, Globe, Image as ImageIcon, Zap, Table2, Calculator, ReceiptText } from "lucide-react";
+import { ArrowRight, TrendingUp, AlertCircle, Scan, Keyboard, Globe, Image as ImageIcon, Zap, Table2, Calculator, ReceiptText, PackageCheck } from "lucide-react";
 
 const CAPTURE_CARDS = [
   {
@@ -171,6 +171,21 @@ export default function Dashboard() {
           </div>
           <Button asChild className="shrink-0">
             <Link href="/accounting-ledger">Open Ledger</Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm border-primary/20 bg-primary/5">
+        <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <PackageCheck className="h-5 w-5 text-primary mt-0.5" />
+            <div>
+              <h3 className="font-bold">Selling Assistant</h3>
+              <p className="text-sm text-muted-foreground">Turn bought items into ready-to-post listings and track them until sold.</p>
+            </div>
+          </div>
+          <Button asChild className="shrink-0">
+            <Link href="/selling-assistant">Create Listings</Link>
           </Button>
         </CardContent>
       </Card>

@@ -9,6 +9,8 @@ import compLookupRouter from "./comp-lookup";
 import inventorySpreadsheetRouter from "./inventory-spreadsheet";
 import budgetPlannerRouter from "./budget-planner";
 import accountingLedgerRouter from "./accounting-ledger";
+import sellingAssistantRouter from "./selling-assistant";
+import preStoreScanRouter from "./pre-store-scan";
 
 const router: IRouter = Router();
 
@@ -22,5 +24,7 @@ router.use(compLookupRouter);
 router.use(inventorySpreadsheetRouter);
 router.use(budgetPlannerRouter);
 router.use(accountingLedgerRouter);
+router.use(sellingAssistantRouter);
+router.use(preStoreScanRouter);
 
 export default router;

@@ -25,6 +25,11 @@ import InventorySpreadsheetPage from "@/pages/inventory-spreadsheet";
 import TrashViewPage from "@/pages/inventory-trash";
 import BudgetPlanner from "@/pages/budget-planner";
 import AccountingLedgerPage from "@/pages/accounting-ledger";
+import SellingAssistantPage from "@/pages/selling-assistant";
+import ListingWorkbenchPage from "@/pages/listing-workbench";
+import SalesPipelinePage from "@/pages/sales-pipeline";
+import PriceMarkdownPlannerPage from "@/pages/price-markdown-planner";
+import BuyerMessageTemplatesPage from "@/pages/buyer-message-templates";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +49,11 @@ function Router() {
         <Route path="/quick-scan" component={QuickScan} />
         <Route path="/comp-lookup" component={CompLookup} />
         <Route path="/budget-planner" component={BudgetPlanner} />
+        <Route path="/selling-assistant" component={SellingAssistantPage} />
+        <Route path="/listing-workbench" component={ListingWorkbenchPage} />
+        <Route path="/sales-pipeline" component={SalesPipelinePage} />
+        <Route path="/price-markdown-planner" component={PriceMarkdownPlannerPage} />
+        <Route path="/buyer-message-templates" component={BuyerMessageTemplatesPage} />
         <Route path="/photo-scan" component={PhotoScan} />
         <Route path="/web-check" component={WebCheck} />
         <Route path="/upload-screenshot" component={UploadScreenshot} />
