@@ -13,6 +13,7 @@ import sellingAssistantRouter from "./selling-assistant";
 import preStoreScanRouter from "./pre-store-scan";
 import thriftScanRouter from "./thrift-scan";
 import pokemonMarketRouter from "./pokemon-market";
+import pokemonScanRouter from "./pokemon-scan";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(sellingAssistantRouter);
 router.use(preStoreScanRouter);
 router.use(thriftScanRouter);
 router.use(pokemonMarketRouter);
+router.use(pokemonScanRouter);
 
 export default router;
