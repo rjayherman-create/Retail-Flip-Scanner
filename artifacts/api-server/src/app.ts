@@ -41,9 +41,8 @@ if (process.env.NODE_ENV === "production") {
     import.meta.dirname,
     "..",
     "..",
-    "warehouse-flip-scanner",
+    "pokevault-tracker",
     "dist",
-    "public",
   );
   app.use(express.static(staticDir));
   // Catch-all: return index.html so client-side routing works
