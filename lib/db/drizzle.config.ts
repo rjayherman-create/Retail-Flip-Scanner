@@ -1,12 +1,24 @@
 import { defineConfig } from "drizzle-kit";
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
+
+const databaseUrl =
+  process.env.DATABASE_URL
+  ?? process.env.DATABASE_PRIVATE_URL
+  ?? process.env.POSTGRES_URL
+  ?? process.env.POSTGRESQL_URL
+  ?? process.env.PGURI;
+
+if (!databaseUrl) {
+  throw new Error(
+    "A PostgreSQL connection variable is required. Set DATABASE_URL or attach the Railway PostgreSQL service.",
+  );
 }
 
 export default defineConfig({
   schema: "./src/schema/*.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: databaseUrl,
   },
+  verbose: true,
+  strict: true,
 });
