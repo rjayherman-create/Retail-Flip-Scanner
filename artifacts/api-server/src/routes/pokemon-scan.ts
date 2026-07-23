@@ -23,7 +23,6 @@ function parseJson(text: string) {
   return JSON.parse(match[0]) as Record<string, unknown>;
 }
 
-<<<<<<< HEAD
 function clean(value: unknown) {
   return String(value ?? "").trim();
 }
@@ -59,7 +58,7 @@ async function findPokemonCardMatches(extracted: Record<string, unknown>) {
   });
   if (!response.ok) return [];
   const json = await response.json() as { data?: Array<Record<string, any>> };
-  return (json.data ?? []).map(card => ({
+  return (json.data ?? []).map((card) => ({
     id: card.id,
     name: card.name,
     number: card.number,
@@ -108,20 +107,13 @@ function estimateOpenAiCost(inputTokens: number, outputTokens: number) {
   return Number((((inputTokens / 1_000_000) * 0.4) + ((outputTokens / 1_000_000) * 1.6)).toFixed(6));
 }
 
-router.post("/pokemon/scan", upload.array("images", 4), async (req, res) => {
+router.post("/pokemon/scan", upload.array("images", 4), async (req, res): Promise<void> => {
   try {
     const files = (req.files as Express.Multer.File[] | undefined) ?? [];
     const submittedUpc = normalizeUpc(req.body.upc || req.body.barcode);
     if (!files.length && !submittedUpc) {
-      return res.status(400).json({ success: false, error: "Upload a product image or submit a UPC." });
-=======
-router.post("/pokemon/scan", upload.array("images", 4), async (req, res): Promise<void> => {
-  try {
-    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
-    if (!files.length) {
-      res.status(400).json({ success: false, error: "Upload at least one product image using the images field." });
+      res.status(400).json({ success: false, error: "Upload a product image or submit a UPC." });
       return;
->>>>>>> 97a637d (Add UPC camera scan and OCR fixes)
     }
 
     const retailer = String(req.body.retailer || "Unknown retailer");
@@ -132,7 +124,7 @@ router.post("/pokemon/scan", upload.array("images", 4), async (req, res): Promis
     const warnings: string[] = [];
 
     const upcMatch = submittedUpc
-      ? await lookupUpc(submittedUpc).catch(error => {
+      ? await lookupUpc(submittedUpc).catch((error) => {
           warnings.push(`UPC lookup unavailable: ${error instanceof Error ? error.message : "unknown error"}`);
           return null;
         })
@@ -156,20 +148,26 @@ router.post("/pokemon/scan", upload.array("images", 4), async (req, res): Promis
       };
     } else {
       if (!files.length) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           error: "The UPC was not found. Add a package photo so OpenAI can be used as backup.",
           upc: submittedUpc,
         });
+        return;
       }
 
       scanMethod = "openai_fallback";
-      const imageContent = files.map(file => ({
+      const imageContent = files.map((file) => ({
         type: "image_url" as const,
         image_url: { url: `data:${file.mimetype};base64,${file.buffer.toString("base64")}`, detail: "high" as const },
       }));
+
       const completion = await openai.chat.completions.create({
-          cb(allowed ? null : new Error("Only image files are supported for Pokémon product scans."), allowed);
+        model: "gpt-4.1-mini",
+        max_completion_tokens: 1200,
+        messages: [
+          {
+            role: "system",
             content: "You identify Pokémon TCG cards, graded cards, and sealed products from photos. Return only valid JSON. Never invent a UPC, set, collector number, promo, language, grade, or identifier. Use null when uncertain. Identification is not authentication.",
           },
           {
@@ -184,6 +182,7 @@ router.post("/pokemon/scan", upload.array("images", 4), async (req, res): Promis
           },
         ],
       });
+
       extracted = parseJson(completion.choices[0]?.message?.content ?? "{}");
       inputTokens = completion.usage?.prompt_tokens ?? 0;
       outputTokens = completion.usage?.completion_tokens ?? 0;
@@ -193,7 +192,7 @@ router.post("/pokemon/scan", upload.array("images", 4), async (req, res): Promis
     const confidence = Number(extracted.confidence || 0);
     const confirmedUpc = normalizeUpc(extracted.upc || submittedUpc) || null;
     const cardMatches = scanMethod === "openai_fallback"
-      ? await findPokemonCardMatches(extracted).catch(error => {
+      ? await findPokemonCardMatches(extracted).catch((error) => {
           warnings.push(`Pokémon card confirmation unavailable: ${error instanceof Error ? error.message : "unknown error"}`);
           return [];
         })
@@ -215,7 +214,7 @@ router.post("/pokemon/scan", upload.array("images", 4), async (req, res): Promis
         current_store_price: Number.isFinite(purchasePrice) ? purchasePrice : 0,
         category: "Pokemon",
         box_condition: extracted.box_condition ? String(extracted.box_condition) : null,
-        sealed_status: extracted.sealed_status ? String(extracted.sealed_status) : null,
+        sealed_status: extracted.sealed_status ? String(extracted.sealed_status) : "sealed",
         confidence_score: Number.isFinite(confidence) ? Math.round(confidence) : 0,
         match_confidence: Number.isFinite(confidence) ? Math.round(confidence) : 0,
         recommendation: confidence >= 75 ? "HOLD" : "UNDER REVIEW",
@@ -250,7 +249,7 @@ router.post("/pokemon/scan", upload.array("images", 4), async (req, res): Promis
       saved_items: savedItems,
       next: {
         portfolio: "/api/pokemon/portfolio",
-        market_check: savedItems.map(item => `/api/pokemon/market-check/${item.id}`),
+        market_check: savedItems.map((item) => `/api/pokemon/market-check/${item.id}`),
       },
     });
     return;
